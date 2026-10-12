@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rsydz-bug</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: #0f0;
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* Scanline effect */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 255, 0, 0.03) 0px,
+      rgba(0, 255, 0, 0.03) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 700px;
+    background: rgba(0, 20, 0, 0.9);
+    border: 2px solid #0f0;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.3), inset 0 0 30px rgba(0, 255, 0, 0.05);
+    position: relative;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 1px dashed #0f0;
+    padding-bottom: 15px;
+  }
+
+  .header h1 {
+    font-size: 22px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px #0f0;
+    animation: flicker 3s infinite;
+  }
+
+  .header .sub {
+    font-size: 11px;
+    color: #ff0;
+    margin-top: 5px;
+    letter-spacing: 1px;
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 1; }
+    93% { opacity: 0.5; }
+    94% { opacity: 1; }
+    96% { opacity: 0.7; }
+    97% { opacity: 1; }
+  }
+
+  .warning-box {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #f00;
+    color: #f66;
+    padding: 10px;
+    font-size: 11px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    color: #0f0;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+
+  .form-group label::before {
+    content: '> ';
+    color: #ff0;
+  }
+
+  input, select {
+    width: 100%;
+    background: #000;
+    border: 1px solid #0f0;
+    color: #0f0;
+    padding: 10px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    border-radius: 4px;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  input:focus, select:focus {
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+    border-color: #ff0;
+    color: #ff0;
+  }
+
+  input::placeholder {
+    color: rgba(0, 255, 0, 0.3);
+  }
+
+  select option {
+    background: #000;
+    color: #0f0;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    flex: 1;
+    min-width: 140px;
+    background: transparent;
+    border: 2px solid #0f0;
+    color: #0f0;
+    padding: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  button:hover:not(:disabled) {
+    background: #0f0;
+    color: #000;
+    box-shadow: 0 0 20px #0f0;
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  button.danger {
+    border-color: #f00;
+    color: #f00;
+  }
+
+  button.danger:hover:not(:disabled) {
+    background: #f00;
+    color: #000;
+    box-shadow: 0 0 20px #f00;
+  }
+
+  /* Terminal Output */
+  .terminal {
+    background: #000;
+    border: 1px solid #0f0;
+    border-radius: 4px;
+    padding: 12px;
+    height: 220px;
+    overflow-y: auto;
+    font-size: 12px;
+    margin-top: 20px;
+    line-height: 1.6;
+    scrollbar-width: thin;
+    scrollbar-color: #0f0 #000;
+  }
+
+  .terminal::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .terminal::-webkit-scrollbar-track {
+    background: #000;
+  }
+
+  .terminal::-webkit-scrollbar-thumb {
+    background: #0f0;
+    border-radius: 3px;
+  }
+
+  .log-line {
+    margin-bottom: 2px;
+    animation: typeIn 0.3s ease;
+  }
+
+  .log-line.info { color: #0af; }
+  .log-line.success { color: #0f0; }
+  .log-line.warn { color: #ff0; }
+  .log-line.error { color: #f00; }
+  .log-line.sys { color: #0ff; }
+
+  @keyframes typeIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    margin-top: 15px;
+    display: none;
+  }
+
+  .progress-wrap.active {
+    display: block;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 5px;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 14px;
+    background: #000;
+    border: 1px solid #0f0;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #0f0, #ff0);
+    transition: width 0.15s linear;
+    box-shadow: 0 0 10px #0f0;
+  }
+
+  /* Status badge */
+  .status-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #ff0;
+    color: #ff0;
+    background: rgba(255, 255, 0, 0.1);
+    letter-spacing: 1px;
+  }
+
+  .status-badge.running {
+    border-color: #f00;
+    color: #f00;
+    background: rgba(255, 0, 0, 0.1);
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 10px;
+    color: rgba(0, 255, 0, 0.4);
+    border-top: 1px dashed rgba(0, 255, 0, 0.3);
+    padding-top: 10px;
+  }
+
+  /* Glitch effect on target */
+  .glitch {
+    animation: glitch 0.3s infinite;
+  }
+
+  @keyframes glitch {
+    0%, 100% { transform: translate(0); }
+    25% { transform: translate(-2px, 1px); }
+    50% { transform: translate(2px, -1px); }
+    75% { transform: translate(-1px, -2px); }
+  }
+
+  @media (max-width: 500px) {
+    .header h1 { font-size: 16px; }
+    .container { padding: 15px; }
+    button { min-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="status-badge" id="statusBadge">● IDLE</div>
+
+  <div class="header">
+    <h1>Rsydz-bug</h1>
+    <div class="sub">[ owner ]</div>
+  </div>
+
+  <div class="warning-box">
+     100% OFFLINE.<br>
+    Tidak ada pesan yang terkirim. Tidak ada API. Tidak ada request.<br>
+    Hanya animasi & log fiktif untuk pembelajaran.
+  </div>
+
+  <div class="form-group">
+    <label>Nomor WhatsApp Target (Simulasi)</label>
+    <input type="text" id="noWa" placeholder="Contoh: 6281234567890" maxlength="15" inputmode="numeric">
+  </div>
+
+  <div class="form-group">
+    <label>Mode Bug (Simulasi)</label>
+    <select id="bugMode">
+      <option value="lag">🔄 Lag Mode - Delay Pesan</option>
+      <option value="stuck">⏳ Stuck Mode - Loading Terus</option>
+      <option value="blank">⬛ Blank Mode - Layar Hitam</option>
+    
+      
+      <option value="notification">🔔 Notification Flood - Notif Spam</option>
+      <option value="crash">💥 Crash Mode - Force Close</option>
+      <option value="freeze">❄️ Freeze Mode - Aplikasi Nganggur</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Intensitas (Simulasi)</label>
+    <select id="intensity">
+      <option value="1">Level 1 - Ringan</option>
+      <option value="2">Level 2 - Sedang</option>
+      <option value="3" selected>Level 3 - Berat</option>
+      <option value="4">Level 4 - Extreme</option>
+      <option value="5">Level 5 - Chaos</option>
+    </select>
+  </div>
+
+  <div class="btn-group">
+    <button id="btnStart" onclick="startSimulasi()">▶ MULAI SIMULASI</button>
+    <button id="btnStop" class="danger" onclick="stopSimulasi()" disabled>■ STOP</button>
+    <button onclick="clearLog()">🗑 CLEAR LOG</button>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-label">
+      <span id="progressText">Memproses...</span>
+      <span id="progressPercent">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div class="terminal" id="terminal">
+    <div class="log-line sys">[SYSTEM] Bug WA siap digunakan.</div>
+    <div class="log-line info">[INFO] Masukkan nomor target & pilih mode bug.</div>
+    
+    <div class="log-line sys">[READY] Menunggu perintah...</div>
+  </div>
+
+  <div class="footer">
+          
+  </div>
+</div>
+
+<script>
+/* ============================================================
+    BUG WA Rsydz
+    
+   ============================================================ */
+
+let isRunning = false;
+let simTimer = null;
+let progressTimer = null;
+
+const terminal = document.getElementById('terminal');
+const statusBadge = document.getElementById('statusBadge');
+const btnStart = document.getElementById('btnStart');
+const btnStop = document.getElementById('btnStop');
+const progressWrap = document.getElementById('progressWrap');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+const progressPercent = document.getElementById('progressPercent');
+
+// Data log per mode (fiktif, buat tampilan doang)
+const LOG_POOL = {
+  lag: [
+    '[SYS] Menginisialisasi paket data...',
+    '[NET] Mengirim request ke node lokal...',
+    '[PKT] Paket #%N% dikirim dengan delay %D%ms',
+    '[WARN] Paket mengalami retransmisi...',
+    '[SYS] Menunggu acknowledgment...',
+    '[INFO] Delay terdeteksi pada paket #%N%',
+    '[NET] Koneksi stabil, melanjutkan...'
+  ],
+  stuck: [
+    '[SYS] Memuat komponen UI...',
+    '[UI] Progress bar stuck di %P%%',
+    '[WARN] UI tidak merespon...',
+    '[SYS] Menunggu event loop...',
+    '[INFO] Loading state tidak berubah',
+    '[NET] Menunggu response dari server...'
+  ],
+  blank: [
+    '[SYS] Merender layout...',
+    '[UI] Background color: #000000',
+    '[UI] Foreground color: #000000',
+    '[WARN] Konten tidak terlihat...',
+    '[SYS] Element visibility: hidden',
+    '[INFO] Layar menjadi kosong'
+  ],
+  emoji: [
+    '[SYS] Menyiapkan payload emoji...',
+    '[PKT] Mengirim batch emoji #%N%',
+    '[INFO] Emoji terkirim: 😵💥🔥😱🤯',
+    '[WARN] Buffer emoji penuh...',
+    '[SYS] Flood emoji level %P%%',
+    '[INFO] Render emoji overload'
+  ],
+  text: [
+    '[SYS] Menyiapkan pesan teks...',
+    '[TXT] Panjang pesan: %N% karakter',
+    '[PKT] Mengirim blok teks #%N%',
+    '[WARN] Melebihi batas normal...',
+    '[INFO] Text overflow pada UI',
+    '[SYS] Auto-scroll tidak berfungsi'
+  ],
+  notification: [
+    '[SYS] Mengaktifkan notifikasi...',
+    '[NOTIF] Push notif #%N% terkirim',
+    '[NOTIF] Badge count: %N%',
+    '[WARN] Notif bertumpuk...',
+    '[INFO] Notification flood %P%%',
+    '[SYS] Status bar penuh'
+  ],
+  crash: [
+    '[SYS] Menjalankan proses...',
+    '[ERR] Exception pada thread #%N%',
+    '[ERR] Stack overflow detected',
+    '[CRASH] Aplikasi berhenti merespon',
+    '[ERR] Force close terdeteksi',
+    '[SYS] Dump: 0x%N%',
+    '[CRASH] Proses terminasi'
+  ],
+  freeze: [
+    '[SYS] Menjalankan proses...',
+    '[UI] UI tidak merespon input',
+    '[WARN] ANR (App Not Responding)',
+    '[SYS] Menunggu timeout...',
+    '[INFO] Frame rate: 0 FPS',
+    '[FREEZE] Aplikasi membeku'
+  ]
+};
+
+const MODE_LABEL = {
+  lag: 'LAG MODE',
+  stuck: 'STUCK MODE',
+  blank: 'BLANK MODE',
+  emoji: 'EMOJI OVERLOAD',
+  text: 'TEXT OVERFLOW',
+  notification: 'NOTIFICATION FLOOD',
+  crash: 'CRASH MODE',
+  freeze: 'FREEZE MODE'
+};
+
+function log(msg, type = 'info') {
+  const line = document.createElement('div');
+  line.className = `log-line ${type}`;
+  line.textContent = msg;
+  terminal.appendChild(line);
+  terminal.scrollTop = terminal.scrollHeight;
+
+  // Batasi jumlah log biar ga berat
+  if (terminal.children.length > 200) {
+    terminal.removeChild(terminal.children[0]);
+  }
+}
+
+function clearLog() {
+  terminal.innerHTML = '';
+  log('[SYSTEM] Log dibersihkan.', 'sys');
+}
+
+function setStatus(text, running = false) {
+  statusBadge.textContent = '● ' + text;
+  statusBadge.className = 'status-badge' + (running ? ' running' : '');
+}
+
+function validateInput() {
+  const noWa = document.getElementById('noWa').value.trim().replace(/\D/g, '');
+  if (!noWa || noWa.length < 10) {
+    log('[ERROR] Nomor WA tidak valid! Minimal 10 digit.', 'error');
+    return false;
+  }
+  return true;
+}
+
+function startbug() {
+  if (isRunning) return;
+  if (!validateInput()) return;
+
+  isRunning = true;
+  btnStart.disabled = true;
+  btnStop.disabled = false;
+  progressWrap.classList.add('active');
+  setStatus('RUNNING', true);
+
+  const noWa = document.getElementById('noWa').value.trim();
+  const mode = document.getElementById('bugMode').value;
+  const intensity = parseInt(document.getElementById('intensity').value);
+  const modeLabel = MODE_LABEL[mode];
+
+  // Header simulasi
+  log('════════════════════════════════', 'sys');
+  log(`[SIM] Memulai bug: ${modeLabel}`, 'sys');
+  log(`[SIM] Target: ${noWa}`, 'info');
+  log(`[SIM] Intensitas: Level ${intensity}`, 'info');
+  log(`[SIM] Status: BELUM TERKIRIM`, 'warn');
+  log('════════════════════════════════', 'sys');
+
+  // Progress simulasi
+  let progress = 0;
+  const totalDuration = 3000 + (intensity * 1000); // 4-8 detik
+  const stepTime = 80;
+  const stepAmount = 100 / (totalDuration / stepTime);
+
+  progressTimer = setInterval(() => {
+    progress += stepAmount;
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(progressTimer);
+    }
+    progressFill.style.width = progress + '%';
+    progressPercent.textContent = Math.floor(progress) + '%';
+
+    // Update label progress
+    const labels = [
+      'Menginisialisasi...',
+      'Menyiapkan payload...',
+      'Mengirim bug...',
+      'Memproses respons...',
+      'Finalisasi...'
+    ];
+    const idx = Math.min(Math.floor(progress / 20), labels.length - 1);
+    progressText.textContent = labels[idx];
+  }, stepTime);
+
+  // Log simulasi berkala
+  const pool = LOG_POOL[mode] || LOG_POOL.lag;
+  const logInterval = Math.max(300, 800 - (intensity * 100));
+  let logCounter = 0;
+
+  simTimer = setInterval(() => {
+    logCounter++;
+    const template = pool[Math.floor(Math.random() * pool.length)];
+    const filled = template
+      .replace(/%N%/g, Math.floor(Math.random() * 99999))
+      .replace(/%D%/g, Math.floor(Math.random() * 5000) + 100)
+      .replace(/%P%/g, Math.floor(Math.random() * 100));
+
+    // Tentukan tipe log
+    let type = 'info';
+    if (filled.includes('[WARN]')) type = 'warn';
+    else if (filled.includes('[ERR]') || filled.includes('[CRASH]')) type = 'error';
+    else if (filled.includes('[SYS]')) type = 'sys';
+    else if (filled.includes('[INFO]')) type = 'success';
+
+    log(filled, type);
+
+    // Kalau progress udah 100, selesaiin
+    if (progress >= 100 && logCounter > 5) {
+      finishSimulasi(modeLabel, noWa);
+    }
+  }, logInterval);
+
+  // Failsafe: selesai max 15 detik
+  setTimeout(() => {
+    if (isRunning) finishSimulasi(modeLabel, noWa);
+  }, 15000);
+}
+
+function finishSimulasi(modeLabel, noWa) {
+  if (!isRunning) return;
+
+  clearInterval(simTimer);
+  clearInterval(progressTimer);
+  isRunning = false;
+  btnStart.disabled = false;
+  btnStop.disabled = true;
+  setStatus('DONE', false);
+
+  progressFill.style.width = '100%';
+  progressPercent.textContent = '100%';
+  progressText.textContent = 'Selesai';
+
+  log('════════════════════════════════', 'sys');
+  log(`[SIM] Simulasi ${modeLabel} selesai.`, 'success');
+  log(`[SIM] Target: ${noWa}`, 'info');
+  log(`[SIM] Status: TERKIRIM`, 'warn');
+  log('════════════════════════════════', 'sys');
+}
+
+function stopSimulasi() {
+  if (!isRunning) return;
+
+  clearInterval(simTimer);
+  clearInterval(progressTimer);
+  isRunning = false;
+  btnStart.disabled = false;
+  btnStop.disabled = true;
+  setStatus('STOPPED', false);
+
+  log('[SYS] bug dihentikan oleh user.', 'warn');
+  progressText.textContent = 'Dihentikan';
+}
+
+// Enter key buat mulai
+document.getElementById('noWa').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !isRunning) startSimulasi();
+});
+
+// Info awal
+window.addEventListener('load', () => {
+  log('[READY] Sistem siap. Pilih mode dan mulai bug .', 'sys');
+});
+</script>
+</body>
+</html>
